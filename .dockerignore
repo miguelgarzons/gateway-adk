@@ -1,0 +1,32 @@
+# VCS
+.git
+.gitignore
+
+# Python cache and artifacts
+__pycache__
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv
+venv
+env
+
+# Tool caches
+.mypy_cache
+.pytest_cache
+.ruff_cache
+
+# IDE/editor
+.vscode
+.idea
+
+# Environment and local files
+.env
+.env.*
+!.env.example
+
+# Build/test artifacts
+dist
+build
+*.log
