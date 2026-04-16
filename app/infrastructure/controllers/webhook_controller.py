@@ -12,7 +12,7 @@ from app.infrastructure.docs.webhook_docs import (
 )
 
 router = APIRouter(tags=["webhooks"])
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("uvicorn.error")
 
 
 class ZohoTicketWebhookPayload(BaseModel):
