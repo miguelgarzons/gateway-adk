@@ -17,11 +17,16 @@ uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload
 
 - `GET /health`: estado del servicio.
 - `GET /docs`: documentacion interactiva (Scalar/OpenAPI).
-- `POST /webhooks/zoho/ticket`: procesa eventos de ticket y ejecuta el agente ADK.
+- `POST /webhooks/zoho/ticket`: encola el procesamiento del ticket y responde de inmediato (asincrono).
+
+## Documentacion API
+
+- El endpoint `POST /webhooks/zoho/ticket` incluye un ejemplo completo de payload Zoho Desk en Scalar.
+- La documentacion del webhook se mantiene separada del controlador en `app/infrastructure/docs/webhook_docs.py`.
 
 ## Flujo Zoho -> ADK
 
-Cuando llega `POST /webhooks/zoho/ticket`, el servicio realiza:
+Cuando llega `POST /webhooks/zoho/ticket`, el servicio responde `202 Accepted` y luego procesa en segundo plano:
 
 1. Creacion (o reutilizacion) de sesion en ADK:
    - `POST /apps/{appName}/users/{userId}/sessions/{sessionId}`
@@ -29,6 +34,7 @@ Cuando llega `POST /webhooks/zoho/ticket`, el servicio realiza:
    - `POST /run`
 
 El mensaje enviado a ADK incluye informacion del ticket (estado, prioridad, descripcion, canal, fechas y campos personalizados).
+El endpoint no espera la respuesta de ADK para responder al cliente.
 
 ## Variables de entorno
 

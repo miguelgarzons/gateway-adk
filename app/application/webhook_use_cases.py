@@ -1,7 +1,10 @@
 import json
+import logging
 from typing import Any
 
-from app.domain.ports.agent_client import HelpdeskAgentClient
+from app.domain.ports.agent_client import AgentClientError, HelpdeskAgentClient
+
+logger = logging.getLogger(__name__)
 
 
 class ProcessZohoWebhookUseCase:
@@ -9,7 +12,7 @@ class ProcessZohoWebhookUseCase:
         self.agent_client = agent_client
         self.app_name = app_name
 
-    def execute(self, payload: dict[str, Any]) -> dict[str, Any]:
+    def build_ack(self, payload: dict[str, Any]) -> dict[str, str]:
         ticket_id = str(payload.get("id") or "unknown")
         contact_id = str(
             payload.get("contactId") or payload.get("email") or "anonymous"
@@ -18,21 +21,31 @@ class ProcessZohoWebhookUseCase:
         user_id = f"user_{contact_id}"
         session_id = f"ticket_{ticket_id}"
 
-        self.agent_client.create_session(self.app_name, user_id, session_id)
-
-        message = self._build_message(payload)
-        run_response = self.agent_client.run(
-            self.app_name, user_id, session_id, message
-        )
-
         return {
-            "status": "processed",
+            "status": "accepted",
             "appName": self.app_name,
             "userId": user_id,
             "sessionId": session_id,
             "ticketId": ticket_id,
-            "runResponse": run_response,
         }
+
+    def execute(self, payload: dict[str, Any]) -> None:
+        ack = self.build_ack(payload)
+        user_id = ack["userId"]
+        session_id = ack["sessionId"]
+
+        self.agent_client.create_session(self.app_name, user_id, session_id)
+
+        message = self._build_message(payload)
+        self.agent_client.run(self.app_name, user_id, session_id, message)
+
+    def execute_safely(self, payload: dict[str, Any]) -> None:
+        try:
+            self.execute(payload)
+        except AgentClientError:
+            logger.exception("ADK processing failed for Zoho webhook")
+        except Exception:
+            logger.exception("Unexpected error processing Zoho webhook")
 
     def _build_message(self, payload: dict[str, Any]) -> str:
         cf = payload.get("cf") or {}
