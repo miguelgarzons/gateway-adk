@@ -1,16 +1,7 @@
 import os
 
 from app.application.webhook_use_cases import ProcessZohoWebhookUseCase
-from app.domain.services import HelloService
-from app.application.use_cases import HelloUseCase
 from app.infrastructure.clients.adk_http_client import AdkHttpClient
-from app.infrastructure.repositories.in_memory_repository import InMemoryHelloRepository
-
-
-def get_hello_use_case() -> HelloUseCase:
-    repo = InMemoryHelloRepository()
-    service = HelloService(repo)
-    return HelloUseCase(service)
 
 
 def get_process_zoho_webhook_use_case() -> ProcessZohoWebhookUseCase:

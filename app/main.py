@@ -1,13 +1,15 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from app.infrastructure.controllers.hello_controller import router
 from app.infrastructure.controllers.health_controller import router as health_router
 from app.infrastructure.controllers.webhook_controller import router as webhook_router
 
 app = FastAPI(
     title="Gateway ADK API",
     version="1.0.0",
-    description="API de ejemplo con arquitectura hexagonal",
+    description=(
+        "Servicio de integracion para recibir webhooks de Zoho Desk y "
+        "enviar el contexto del ticket al agente ADK."
+    ),
     docs_url=None,
     redoc_url=None,
     openapi_url="/openapi.json",
@@ -38,6 +40,5 @@ def scalar_docs() -> HTMLResponse:
     )
 
 
-app.include_router(router)
 app.include_router(health_router)
 app.include_router(webhook_router)
