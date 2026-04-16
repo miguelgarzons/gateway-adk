@@ -264,12 +264,19 @@ ZOHO_TICKET_WEBHOOK_EXAMPLE: dict[str, Any] = {
     "category": None,
 }
 
+ZOHO_TICKET_WEBHOOK_MINIMAL_EXAMPLE: dict[str, str] = {"id": "474709001374378051"}
+
 ZOHO_TICKET_WEBHOOK_OPENAPI_EXAMPLES: dict[str, Any] = {
+    "zoho_ticket_minimo": {
+        "summary": "Payload minimo (solo id)",
+        "description": "Caso soportado para integraciones que solo envian el identificador del ticket.",
+        "value": ZOHO_TICKET_WEBHOOK_MINIMAL_EXAMPLE,
+    },
     "zoho_ticket_completo": {
         "summary": "Payload completo de Zoho Desk",
         "description": "Ejemplo real de ticket con customFields y cf para validacion funcional.",
         "value": ZOHO_TICKET_WEBHOOK_EXAMPLE,
-    }
+    },
 }
 
 ZOHO_TICKET_WEBHOOK_ACCEPTED_RESPONSE_EXAMPLE: dict[str, str] = {

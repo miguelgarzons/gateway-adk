@@ -7,6 +7,14 @@ services:
       - .:/workspace:cached
     env_file:
       - .env
+    environment:
+      ADK_BASE_URL: ${ADK_BASE_URL:-http://adk-api:8001}
     ports:
-      - "${UVICORN_PORT:-8000}:8000"
+      - "${HOST_PORT:-8010}:${UVICORN_PORT:-8000}"
     command: sh -lc "uvicorn app.main:app --reload --host $${UVICORN_HOST:-0.0.0.0} --port $${UVICORN_PORT:-8000}"
+    networks:
+      - adk_shared_net
+
+networks:
+  adk_shared_net:
+    external: true

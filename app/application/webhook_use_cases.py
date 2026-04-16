@@ -14,9 +14,8 @@ class ProcessZohoWebhookUseCase:
 
     def build_ack(self, payload: dict[str, Any]) -> dict[str, str]:
         ticket_id = str(payload.get("id") or "unknown")
-        contact_id = str(
-            payload.get("contactId") or payload.get("email") or "anonymous"
-        )
+        identity = payload.get("contactId") or payload.get("email") or ticket_id
+        contact_id = str(identity)
 
         user_id = f"user_{contact_id}"
         session_id = f"ticket_{ticket_id}"

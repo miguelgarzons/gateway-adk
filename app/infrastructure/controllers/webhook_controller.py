@@ -63,7 +63,10 @@ def process_zoho_ticket_webhook(
     payload: ZohoTicketWebhookPayload = Body(
         ...,
         openapi_examples=ZOHO_TICKET_WEBHOOK_OPENAPI_EXAMPLES,
-        description="Payload del ticket enviado por Zoho Desk.",
+        description=(
+            "Payload del ticket enviado por Zoho Desk. Soporta payload minimo "
+            "con solo 'id' o payload completo del ticket."
+        ),
     ),
     use_case: ProcessZohoWebhookUseCase = Depends(get_process_zoho_webhook_use_case),
 ) -> ZohoTicketWebhookAcceptedResponse:
