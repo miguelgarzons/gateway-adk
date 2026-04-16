@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Body, Depends, status
@@ -11,6 +12,7 @@ from app.infrastructure.docs.webhook_docs import (
 )
 
 router = APIRouter(tags=["webhooks"])
+logger = logging.getLogger(__name__)
 
 
 class ZohoTicketWebhookPayload(BaseModel):
@@ -71,6 +73,13 @@ def process_zoho_ticket_webhook(
     use_case: ProcessZohoWebhookUseCase = Depends(get_process_zoho_webhook_use_case),
 ) -> ZohoTicketWebhookAcceptedResponse:
     payload_data = payload.model_dump()
+    logger.info("Zoho webhook received payload=%s", payload_data)
     ack = use_case.build_ack(payload_data)
+    logger.info(
+        "Zoho webhook accepted ticketId=%s sessionId=%s userId=%s",
+        ack["ticketId"],
+        ack["sessionId"],
+        ack["userId"],
+    )
     background_tasks.add_task(use_case.execute_safely, payload_data)
     return ZohoTicketWebhookAcceptedResponse(**ack)
