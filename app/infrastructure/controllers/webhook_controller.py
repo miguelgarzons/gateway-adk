@@ -72,7 +72,7 @@ def process_zoho_ticket_webhook(
     ),
     use_case: ProcessZohoWebhookUseCase = Depends(get_process_zoho_webhook_use_case),
 ) -> ZohoTicketWebhookAcceptedResponse:
-    payload_data = payload.model_dump()
+    payload_data = payload.model_dump(exclude_unset=True)
     logger.info("Zoho webhook received payload=%s", payload_data)
     ack = use_case.build_ack(payload_data)
     logger.info(

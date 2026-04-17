@@ -35,6 +35,7 @@ Cuando llega `POST /webhooks/zoho/ticket`, el servicio responde `202 Accepted` y
 
 El mensaje enviado a ADK incluye informacion del ticket (estado, prioridad, descripcion, canal, fechas y campos personalizados).
 El endpoint no espera la respuesta de ADK para responder al cliente.
+El payload del webhook se reenvia a ADK en el mismo formato JSON recibido, sin transformacion de campos.
 
 ## Variables de entorno
 

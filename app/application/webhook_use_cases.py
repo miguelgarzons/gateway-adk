@@ -55,31 +55,4 @@ class ProcessZohoWebhookUseCase:
             )
 
     def _build_message(self, payload: dict[str, Any]) -> str:
-        cf = payload.get("cf") or {}
-
-        context = {
-            "ticketId": payload.get("id"),
-            "ticketNumber": payload.get("ticketNumber"),
-            "status": payload.get("status"),
-            "subject": payload.get("subject"),
-            "description": payload.get("description"),
-            "channel": payload.get("channel"),
-            "priority": payload.get("priority"),
-            "contactId": payload.get("contactId"),
-            "email": payload.get("email"),
-            "phone": payload.get("phone"),
-            "webUrl": payload.get("webUrl"),
-            "createdTime": payload.get("createdTime"),
-            "modifiedTime": payload.get("modifiedTime"),
-            "dueDate": payload.get("dueDate"),
-            "programa": cf.get("cf_programa"),
-            "modalidad": cf.get("cf_modalidad"),
-            "periodo": cf.get("cf_periodo"),
-            "subCategorias": cf.get("cf_sub_categorias"),
-            "categoria": cf.get("cf_categoria"),
-            "numeroDocumento": cf.get("cf_numero_de_documento"),
-            "observaciones": cf.get("cf_observaciones"),
-        }
-
-        context_json = json.dumps(context, ensure_ascii=False, indent=2)
-        return f"Contexto del ticket:\n{context_json}"
+        return json.dumps(payload, ensure_ascii=False)
