@@ -41,6 +41,8 @@ El endpoint no espera la respuesta de ADK para responder al cliente.
 - `ADK_BASE_URL` (default: `http://localhost:8001`)
 - `ADK_APP_NAME` (default: `helpdesk_agent`)
 - `ADK_TIMEOUT_SECONDS` (default: `20`)
+- `ADK_RUN_TIMEOUT_SECONDS` (default: `60`)
+- `ADK_RUN_RETRIES` (default: `1`)
 
 ## Despliegue en Cloud Run
 

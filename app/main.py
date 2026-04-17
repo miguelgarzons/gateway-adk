@@ -1,7 +1,11 @@
-from fastapi import FastAPI
+import logging
+
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from app.infrastructure.controllers.health_controller import router as health_router
 from app.infrastructure.controllers.webhook_controller import router as webhook_router
+
+logger = logging.getLogger("uvicorn.error")
 
 app = FastAPI(
     title="Gateway ADK API",
@@ -14,6 +18,30 @@ app = FastAPI(
     redoc_url=None,
     openapi_url="/openapi.json",
 )
+
+
+@app.middleware("http")
+async def log_incoming_requests(request: Request, call_next):
+    body_text = ""
+    content_type = request.headers.get("content-type", "")
+    if request.method in {"POST", "PUT", "PATCH"} and (
+        "application/json" in content_type or request.url.path.startswith("/docs")
+    ):
+        raw_body = await request.body()
+        body_text = raw_body.decode("utf-8", errors="replace")[:4000]
+
+    if body_text:
+        logger.info(
+            "Incoming request method=%s path=%s userAgent=%s contentType=%s body=%s",
+            request.method,
+            request.url.path,
+            request.headers.get("user-agent", ""),
+            content_type,
+            body_text,
+        )
+
+    response = await call_next(request)
+    return response
 
 
 @app.get("/docs", include_in_schema=False)

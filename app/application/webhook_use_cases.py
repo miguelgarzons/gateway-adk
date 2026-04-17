@@ -39,12 +39,20 @@ class ProcessZohoWebhookUseCase:
         self.agent_client.run(self.app_name, user_id, session_id, message)
 
     def execute_safely(self, payload: dict[str, Any]) -> None:
+        ticket_id = str(payload.get("id") or "unknown")
         try:
             self.execute(payload)
-        except AgentClientError:
-            logger.exception("ADK processing failed for Zoho webhook")
-        except Exception:
-            logger.exception("Unexpected error processing Zoho webhook")
+            logger.info("ADK processing completed ticketId=%s", ticket_id)
+        except AgentClientError as exc:
+            logger.warning(
+                "ADK processing failed ticketId=%s error=%s", ticket_id, str(exc)
+            )
+        except Exception as exc:
+            logger.error(
+                "Unexpected webhook processing error ticketId=%s error=%s",
+                ticket_id,
+                str(exc),
+            )
 
     def _build_message(self, payload: dict[str, Any]) -> str:
         cf = payload.get("cf") or {}
@@ -74,8 +82,4 @@ class ProcessZohoWebhookUseCase:
         }
 
         context_json = json.dumps(context, ensure_ascii=False, indent=2)
-        return (
-            "Analiza el siguiente ticket de mesa de ayuda y sugiere la mejor respuesta en espanol, "
-            "con pasos claros y accionables para el agente.\n\n"
-            f"Contexto del ticket:\n{context_json}"
-        )
+        return f"Contexto del ticket:\n{context_json}"
