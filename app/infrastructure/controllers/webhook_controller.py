@@ -1,7 +1,7 @@
 import logging
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, Body, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, Request, status
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.application.webhook_use_cases import ProcessZohoWebhookUseCase
@@ -60,7 +60,8 @@ class ZohoTicketWebhookAcceptedResponse(BaseModel):
         }
     },
 )
-def process_zoho_ticket_webhook(
+async def process_zoho_ticket_webhook(
+    request: Request,  # 👈 clave
     background_tasks: BackgroundTasks,
     payload: ZohoTicketWebhookPayload = Body(
         ...,
@@ -72,14 +73,21 @@ def process_zoho_ticket_webhook(
     ),
     use_case: ProcessZohoWebhookUseCase = Depends(get_process_zoho_webhook_use_case),
 ) -> ZohoTicketWebhookAcceptedResponse:
-    payload_data = payload.model_dump(exclude_unset=True)
+
+    # 👇 JSON ORIGINAL SIN TOCAR
+    payload_data = await request.json()
+
     logger.info("Zoho webhook received payload=%s", payload_data)
+
     ack = use_case.build_ack(payload_data)
+
     logger.info(
         "Zoho webhook accepted ticketId=%s sessionId=%s userId=%s",
         ack["ticketId"],
         ack["sessionId"],
         ack["userId"],
     )
+
     background_tasks.add_task(use_case.execute_safely, payload_data)
+
     return ZohoTicketWebhookAcceptedResponse(**ack)
