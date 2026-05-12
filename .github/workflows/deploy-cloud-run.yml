@@ -1,14 +1,12 @@
-name: Deploy Gateway ADK to Cloud Run
+name: Deploy Gateway ADK
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop, qa]
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: us-central1
-  SERVICE_NAME: gateway-adk
-  REPOSITORY: gateway-adk
   IMAGE_NAME: gateway-adk
   ADK_BASE_URL: ${{ vars.ADK_BASE_URL }}
 
@@ -20,6 +18,19 @@ jobs:
       id-token: write
 
     steps:
+      - name: Set environment based on branch
+        run: |
+          if [[ "${GITHUB_REF##*/}" == "main" ]]; then
+            echo "SERVICE_NAME=gateway-adk" >> $GITHUB_ENV
+            echo "REPOSITORY=gateway-adk" >> $GITHUB_ENV
+          elif [[ "${GITHUB_REF##*/}" == "qa" ]]; then
+            echo "SERVICE_NAME=gateway-adk-qa" >> $GITHUB_ENV
+            echo "REPOSITORY=gateway-adk-qa" >> $GITHUB_ENV
+          else
+            echo "SERVICE_NAME=gateway-adk-dev" >> $GITHUB_ENV
+            echo "REPOSITORY=gateway-adk-dev" >> $GITHUB_ENV
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -31,32 +42,21 @@ jobs:
       - name: Set up gcloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker auth for Artifact Registry
+      - name: Configure Docker auth
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push Docker image
+      - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+          gcloud run deploy $SERVICE_NAME \
+            --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/$REPOSITORY/${{ env.IMAGE_NAME }}:${{ github.sha }} \
             --platform managed \
             --region ${{ env.REGION }} \
             --allow-unauthenticated \
             --set-env-vars "ADK_BASE_URL=${{ env.ADK_BASE_URL }}"
-
-      - name: Verify deployment
-        run: |
-          sleep 5
-          URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --platform managed --region ${{ env.REGION }} --format 'value(status.url)')
-          echo "Deployed to: $URL"

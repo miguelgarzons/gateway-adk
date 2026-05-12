@@ -4,7 +4,7 @@ Servicio FastAPI para integrar tickets de Zoho Desk con un agente ADK.
 
 ## Objetivo
 
-Este servicio recibe webhooks de tickets, normaliza el contexto y lo envia al backend ADK para que el agente genere una respuesta sugerida.
+Este servicio recibe webhooks de tickets y reenvia el payload al backend ADK para que el agente genere una respuesta sugerida.
 
 ## Ejecucion local
 
@@ -44,6 +44,13 @@ El payload del webhook se reenvia a ADK en el mismo formato JSON recibido, sin t
 - `ADK_TIMEOUT_SECONDS` (default: `20`)
 - `ADK_RUN_TIMEOUT_SECONDS` (default: `60`)
 - `ADK_RUN_RETRIES` (default: `1`)
+- `ADK_VERIFICACION_ACADEMICA_BASE_URL` (opcional, habilita ruteo por categoria)
+- `ADK_VERIFICACION_ACADEMICA_APP_NAME` (default: `verificacion_academica_agent`)
+
+Regla de ruteo configurable por entorno:
+
+- Si `SOLICITUD=ACADEMICA`, `CATEGORIA=CERTIFICACIONES Y VERIFICACIONES` y `SUB CATEGORIAS=VERIFICACION ACADEMICA`, el webhook se envia al agente configurado en `ADK_VERIFICACION_ACADEMICA_BASE_URL`.
+- En cualquier otro caso, usa el agente por defecto (`ADK_BASE_URL` + `ADK_APP_NAME`).
 
 ## Despliegue en Cloud Run
 
