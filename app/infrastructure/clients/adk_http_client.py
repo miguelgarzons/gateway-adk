@@ -1,3 +1,4 @@
+import logging
 import time
 from typing import Any
 from urllib.parse import quote
@@ -5,6 +6,8 @@ from urllib.parse import quote
 import httpx
 
 from app.domain.ports.agent_client import AgentClientError, HelpdeskAgentClient
+
+logger = logging.getLogger("uvicorn.error")
 
 
 class AdkHttpClient(HelpdeskAgentClient):
@@ -25,6 +28,13 @@ class AdkHttpClient(HelpdeskAgentClient):
             f"{self.base_url}/apps/{quote(app_name, safe='')}/users/{quote(user_id, safe='')}"
             f"/sessions/{quote(session_id, safe='')}"
         )
+        logger.info(
+            "ADK create_session request baseUrl=%s appName=%s userId=%s sessionId=%s",
+            self.base_url,
+            app_name,
+            user_id,
+            session_id,
+        )
 
         try:
             response = httpx.post(url, json={}, timeout=self.timeout_seconds)
@@ -34,6 +44,13 @@ class AdkHttpClient(HelpdeskAgentClient):
             ) from exc
 
         if response.status_code in (200, 201, 204, 409):
+            logger.info(
+                "ADK create_session response status=%s appName=%s userId=%s sessionId=%s",
+                response.status_code,
+                app_name,
+                user_id,
+                session_id,
+            )
             return
 
         raise AgentClientError(
@@ -54,6 +71,14 @@ class AdkHttpClient(HelpdeskAgentClient):
                 "parts": [{"text": message}],
             },
         }
+        logger.info(
+            "ADK run request baseUrl=%s appName=%s userId=%s sessionId=%s messageChars=%s",
+            self.base_url,
+            app_name,
+            user_id,
+            session_id,
+            len(message),
+        )
 
         attempts = self.run_retries + 1
         for attempt in range(1, attempts + 1):
@@ -62,6 +87,14 @@ class AdkHttpClient(HelpdeskAgentClient):
                     url,
                     json=payload,
                     timeout=self.run_timeout_seconds,
+                )
+                logger.info(
+                    "ADK run response status=%s appName=%s userId=%s sessionId=%s attempt=%s",
+                    response.status_code,
+                    app_name,
+                    user_id,
+                    session_id,
+                    attempt,
                 )
                 break
             except httpx.ReadTimeout as exc:
@@ -79,7 +112,9 @@ class AdkHttpClient(HelpdeskAgentClient):
 
         if not response.is_success:
             raise AgentClientError(
-                f"ADK rechazo /run ({response.status_code}): {response.text[:500]}"
+                "ADK rechazo /run "
+                f"({response.status_code}) appName={app_name} baseUrl={self.base_url}: "
+                f"{response.text[:500]}"
             )
 
         content_type = response.headers.get("content-type", "")

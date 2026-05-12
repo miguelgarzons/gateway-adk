@@ -65,11 +65,27 @@ class ProcessZohoWebhookUseCase:
         agent_client: HelpdeskAgentClient = self.agent_client_factory(target.base_url)
         user_id = ack["userId"]
         session_id = ack["sessionId"]
+        ticket_id = ack["ticketId"]
+
+        logger.info(
+            "Webhook execution start ticketId=%s appName=%s baseUrl=%s userId=%s sessionId=%s",
+            ticket_id,
+            target.app_name,
+            target.base_url,
+            user_id,
+            session_id,
+        )
 
         agent_client.create_session(target.app_name, user_id, session_id)
+        logger.info(
+            "Webhook session ensured ticketId=%s appName=%s", ticket_id, target.app_name
+        )
 
         message = self._build_message(payload)
         agent_client.run(target.app_name, user_id, session_id, message)
+        logger.info(
+            "Webhook run completed ticketId=%s appName=%s", ticket_id, target.app_name
+        )
 
     def execute_safely(self, payload: dict[str, Any]) -> None:
         ticket_id = str(payload.get("id") or "unknown")
