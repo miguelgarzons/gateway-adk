@@ -17,7 +17,7 @@ jobs:
       contents: read
       id-token: write
 
-    # 🔥 esto activa los environments de GitHub (main, qa, develop)
+    # 🔥 usa environments de GitHub (main, qa, develop)
     environment: ${{ github.ref_name }}
 
     steps:
@@ -60,22 +60,26 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # 🔥 Generamos archivo de variables dinámico desde GitHub Environments
-      - name: Generate env file
+      # ✅ YAML válido para Cloud Run (IMPORTANTE)
+      - name: Generate env.yaml
         run: |
           cat <<EOF > env.yaml
-          UVICORN_HOST=0.0.0.0
-          UVICORN_PORT=8000
-          HOST_PORT=8010
-          PYTHONUNBUFFERED=1
-          ADK_BASE_URL=${{ vars.ADK_BASE_URL }}
-          ADK_APP_NAME=${{ vars.ADK_APP_NAME }}
-          ADK_TIMEOUT_SECONDS=${{ vars.ADK_TIMEOUT_SECONDS }}
-          ADK_RUN_TIMEOUT_SECONDS=${{ vars.ADK_RUN_TIMEOUT_SECONDS }}
-          ADK_RUN_RETRIES=${{ vars.ADK_RUN_RETRIES }}
-          ADK_VERIFICACION_ACADEMICA_BASE_URL=${{ vars.ADK_VERIFICACION_ACADEMICA_BASE_URL }}
-          ADK_VERIFICACION_ACADEMICA_APP_NAME=${{ vars.ADK_VERIFICACION_ACADEMICA_APP_NAME }}
+          UVICORN_HOST: "0.0.0.0"
+          UVICORN_PORT: "8000"
+          HOST_PORT: "8010"
+          PYTHONUNBUFFERED: "1"
+          ADK_BASE_URL: "${{ vars.ADK_BASE_URL }}"
+          ADK_APP_NAME: "${{ vars.ADK_APP_NAME }}"
+          ADK_TIMEOUT_SECONDS: "${{ vars.ADK_TIMEOUT_SECONDS }}"
+          ADK_RUN_TIMEOUT_SECONDS: "${{ vars.ADK_RUN_TIMEOUT_SECONDS }}"
+          ADK_RUN_RETRIES: "${{ vars.ADK_RUN_RETRIES }}"
+          ADK_VERIFICACION_ACADEMICA_BASE_URL: "${{ vars.ADK_VERIFICACION_ACADEMICA_BASE_URL }}"
+          ADK_VERIFICACION_ACADEMICA_APP_NAME: "${{ vars.ADK_VERIFICACION_ACADEMICA_APP_NAME }}"
           EOF
+
+      # 🧪 debug opcional (muy útil)
+      - name: Debug env.yaml
+        run: cat env.yaml
 
       - name: Deploy to Cloud Run
         run: |
