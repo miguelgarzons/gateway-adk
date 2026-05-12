@@ -8,14 +8,17 @@ env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: us-central1
   IMAGE_NAME: gateway-adk
-  ADK_BASE_URL: ${{ vars.ADK_BASE_URL }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       id-token: write
+
+    # 🔥 esto activa los environments de GitHub (main, qa, develop)
+    environment: ${{ github.ref_name }}
 
     steps:
       - name: Set environment based on branch
@@ -45,12 +48,34 @@ jobs:
       - name: Configure Docker auth
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
-      - name: Build and push
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 🔥 Generamos archivo de variables dinámico desde GitHub Environments
+      - name: Generate env file
+        run: |
+          cat <<EOF > env.yaml
+          UVICORN_HOST=0.0.0.0
+          UVICORN_PORT=8000
+          HOST_PORT=8010
+          PYTHONUNBUFFERED=1
+          ADK_BASE_URL=${{ vars.ADK_BASE_URL }}
+          ADK_APP_NAME=${{ vars.ADK_APP_NAME }}
+          ADK_TIMEOUT_SECONDS=${{ vars.ADK_TIMEOUT_SECONDS }}
+          ADK_RUN_TIMEOUT_SECONDS=${{ vars.ADK_RUN_TIMEOUT_SECONDS }}
+          ADK_RUN_RETRIES=${{ vars.ADK_RUN_RETRIES }}
+          ADK_VERIFICACION_ACADEMICA_BASE_URL=${{ vars.ADK_VERIFICACION_ACADEMICA_BASE_URL }}
+          ADK_VERIFICACION_ACADEMICA_APP_NAME=${{ vars.ADK_VERIFICACION_ACADEMICA_APP_NAME }}
+          EOF
 
       - name: Deploy to Cloud Run
         run: |
@@ -59,4 +84,13 @@ jobs:
             --platform managed \
             --region ${{ env.REGION }} \
             --allow-unauthenticated \
-            --set-env-vars "ADK_BASE_URL=${{ env.ADK_BASE_URL }}"
+            --env-vars-file env.yaml
+
+      - name: Verify deployment
+        run: |
+          sleep 5
+          URL=$(gcloud run services describe $SERVICE_NAME \
+            --platform managed \
+            --region ${{ env.REGION }} \
+            --format 'value(status.url)')
+          echo "✅ Deployed to: $URL"
