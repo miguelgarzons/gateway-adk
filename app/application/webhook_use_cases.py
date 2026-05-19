@@ -35,15 +35,12 @@ class ProcessZohoWebhookUseCase:
     def __init__(
         self,
         agent_client_factory: Callable[[str], HelpdeskAgentClient],
-        default_target: AgentTarget,
         routes: list[AgentRouteRule] | None = None,
     ):
         self.agent_client_factory = agent_client_factory
-        self.default_target = default_target
         self.routes = routes or []
 
     def build_ack(self, payload: dict[str, Any]) -> dict[str, str]:
-        target = self._resolve_target(payload)
         ticket_id = str(payload.get("id") or "unknown")
         identity = payload.get("contactId") or payload.get("email") or ticket_id
         contact_id = str(identity)
@@ -53,19 +50,26 @@ class ProcessZohoWebhookUseCase:
 
         return {
             "status": "accepted",
-            "appName": target.app_name,
             "userId": user_id,
             "sessionId": session_id,
             "ticketId": ticket_id,
         }
 
     def execute(self, payload: dict[str, Any]) -> None:
-        ack = self.build_ack(payload)
         target = self._resolve_target(payload)
+        ticket_id = str(payload.get("id") or "unknown")
+
+        if target is None:
+            logger.info(
+                "Ticket skipped ticketId=%s reason=no matching route",
+                ticket_id,
+            )
+            return
+
+        ack = self.build_ack(payload)
         agent_client: HelpdeskAgentClient = self.agent_client_factory(target.base_url)
         user_id = ack["userId"]
         session_id = ack["sessionId"]
-        ticket_id = ack["ticketId"]
 
         logger.info(
             "Webhook execution start ticketId=%s appName=%s baseUrl=%s userId=%s sessionId=%s",
@@ -91,7 +95,6 @@ class ProcessZohoWebhookUseCase:
         ticket_id = str(payload.get("id") or "unknown")
         try:
             self.execute(payload)
-            logger.info("ADK processing completed ticketId=%s", ticket_id)
         except AgentClientError as exc:
             logger.warning(
                 "ADK processing failed ticketId=%s error=%s", ticket_id, str(exc)
@@ -106,7 +109,7 @@ class ProcessZohoWebhookUseCase:
     def _build_message(self, payload: dict[str, Any]) -> str:
         return json.dumps(payload, ensure_ascii=False)
 
-    def _resolve_target(self, payload: dict[str, Any]) -> AgentTarget:
+    def _resolve_target(self, payload: dict[str, Any]) -> AgentTarget | None:
         request_meta = self._extract_request_meta(payload)
         solicitud = request_meta["solicitud"]
         categoria = request_meta["categoria"]
@@ -123,7 +126,14 @@ class ProcessZohoWebhookUseCase:
                 )
                 return route.target
 
-        return self.default_target
+        logger.info(
+            "Webhook no matching route ticketId=%s solicitud=%s categoria=%s subCategorias=%s",
+            payload.get("id", "?"),
+            solicitud,
+            categoria,
+            sub_categorias,
+        )
+        return None
 
     def _extract_request_meta(self, payload: dict[str, Any]) -> dict[str, str]:
         custom_fields = payload.get("customFields") or {}
