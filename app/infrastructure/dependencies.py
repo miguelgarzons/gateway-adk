@@ -9,8 +9,6 @@ from app.infrastructure.clients.adk_http_client import AdkHttpClient
 
 
 def get_process_zoho_webhook_use_case() -> ProcessZohoWebhookUseCase:
-    base_url = os.getenv("ADK_BASE_URL", "http://localhost:8001")
-    app_name = os.getenv("ADK_APP_NAME", "helpdesk_agent")
     timeout_seconds = float(os.getenv("ADK_TIMEOUT_SECONDS", "20"))
     run_timeout_seconds = float(os.getenv("ADK_RUN_TIMEOUT_SECONDS", "60"))
     run_retries = int(os.getenv("ADK_RUN_RETRIES", "1"))
@@ -22,8 +20,6 @@ def get_process_zoho_webhook_use_case() -> ProcessZohoWebhookUseCase:
             run_timeout_seconds=run_timeout_seconds,
             run_retries=run_retries,
         )
-
-    default_target = AgentTarget(base_url=base_url, app_name=app_name)
 
     routes: list[AgentRouteRule] = []
     verificacion_base_url = os.getenv("ADK_VERIFICACION_ACADEMICA_BASE_URL", "").strip()
@@ -45,6 +41,5 @@ def get_process_zoho_webhook_use_case() -> ProcessZohoWebhookUseCase:
 
     return ProcessZohoWebhookUseCase(
         agent_client_factory=build_agent_client,
-        default_target=default_target,
         routes=routes,
     )
