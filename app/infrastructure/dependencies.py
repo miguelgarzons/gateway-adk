@@ -39,7 +39,19 @@ def get_process_zoho_webhook_use_case() -> ProcessZohoWebhookUseCase:
             )
         )
 
+    default_target: AgentTarget | None = None
+    categorizador_base_url = os.getenv("ADK_CATEGORIZADOR_BASE_URL", "").strip()
+    if categorizador_base_url:
+        categorizador_app_name = os.getenv(
+            "ADK_CATEGORIZADOR_APP_NAME", "categorizador_agent"
+        )
+        default_target = AgentTarget(
+            base_url=categorizador_base_url,
+            app_name=categorizador_app_name,
+        )
+
     return ProcessZohoWebhookUseCase(
         agent_client_factory=build_agent_client,
         routes=routes,
+        default_target=default_target,
     )

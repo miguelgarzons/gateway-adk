@@ -36,9 +36,11 @@ class ProcessZohoWebhookUseCase:
         self,
         agent_client_factory: Callable[[str], HelpdeskAgentClient],
         routes: list[AgentRouteRule] | None = None,
+        default_target: AgentTarget | None = None,
     ):
         self.agent_client_factory = agent_client_factory
         self.routes = routes or []
+        self.default_target = default_target
 
     def build_ack(self, payload: dict[str, Any]) -> dict[str, str]:
         ticket_id = str(payload.get("id") or "unknown")
@@ -47,16 +49,22 @@ class ProcessZohoWebhookUseCase:
 
         user_id = f"user_{contact_id}"
         session_id = f"ticket_{ticket_id}"
+        app_name = self.default_target.app_name if self.default_target else "unknown"
 
         return {
             "status": "accepted",
+            "appName": app_name,
             "userId": user_id,
             "sessionId": session_id,
             "ticketId": ticket_id,
         }
 
     def execute(self, payload: dict[str, Any]) -> None:
-        target = self._resolve_target(payload)
+        if self.default_target:
+            target = self.default_target
+        else:
+            target = self._resolve_target(payload)
+
         ticket_id = str(payload.get("id") or "unknown")
 
         if target is None:

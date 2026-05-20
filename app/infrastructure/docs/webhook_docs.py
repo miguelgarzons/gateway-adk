@@ -281,7 +281,7 @@ ZOHO_TICKET_WEBHOOK_OPENAPI_EXAMPLES: dict[str, Any] = {
 
 ZOHO_TICKET_WEBHOOK_ACCEPTED_RESPONSE_EXAMPLE: dict[str, str] = {
     "status": "accepted",
-    "appName": "helpdesk_agent",
+    "appName": "categorizador_agent",
     "userId": "user_474709000810637250",
     "sessionId": "ticket_474709001374378051",
     "ticketId": "474709001374378051",
