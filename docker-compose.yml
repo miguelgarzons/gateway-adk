@@ -9,6 +9,7 @@ services:
       - .env
     environment:
       ADK_BASE_URL: ${ADK_BASE_URL:-http://adk-api:8001}
+      ADK_CATEGORIZADOR_BASE_URL: ${ADK_CATEGORIZADOR_BASE_URL:-}
     ports:
       - "${HOST_PORT:-8010}:${UVICORN_PORT:-8000}"
     command: sh -lc "uvicorn app.main:app --reload --host $${UVICORN_HOST:-0.0.0.0} --port $${UVICORN_PORT:-8000}"
