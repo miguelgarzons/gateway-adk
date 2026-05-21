@@ -1,10 +1,10 @@
 # Gateway ADK API
 
-Servicio FastAPI para integrar tickets de Zoho Desk con un agente ADK.
+Servicio FastAPI para integrar tickets de Zoho Desk con un agente ADK categorizador.
 
 ## Objetivo
 
-Este servicio recibe webhooks de tickets y reenvia el payload al backend ADK para que el agente genere una respuesta sugerida.
+Este servicio recibe webhooks de tickets y reenvia el payload al backend ADK categorizador para que el agente genere una respuesta sugerida.
 
 ## Ejecucion local
 
@@ -37,18 +37,16 @@ El mensaje enviado a ADK incluye informacion del ticket (estado, prioridad, desc
 El endpoint no espera la respuesta de ADK para responder al cliente.
 El payload del webhook se reenvia a ADK en el mismo formato JSON recibido, sin transformacion de campos.
 
-## Ruteo por categoria
+## Destino unico
 
-El servicio usa un **destino por defecto** configurado via `ADK_CATEGORIZADOR_BASE_URL`. Todos los tickets se envian a esa URL. Adicionalmente soporta rutas especificas por categoria (via `ADK_VERIFICACION_ACADEMICA_BASE_URL`) que tienen prioridad si coinciden.
+Todos los tickets se envian al agente categorizador configurado via `ADK_CATEGORIZADOR_BASE_URL`.
 
 ### Variables de entorno
 
 | Variable | Default | Descripcion |
 |---|---|---|
-| `ADK_CATEGORIZADOR_BASE_URL` | — | URL del agente categorizador (destino por defecto para todos los tickets) |
+| `ADK_CATEGORIZADOR_BASE_URL` | **requerido** | URL del agente categorizador |
 | `ADK_CATEGORIZADOR_APP_NAME` | `categorizador_agent` | Nombre de la app del agente categorizador |
-| `ADK_VERIFICACION_ACADEMICA_BASE_URL` | — | URL del agente de verificacion academica (ruta especifica) |
-| `ADK_VERIFICACION_ACADEMICA_APP_NAME` | `verificacion_academica_agent` | Nombre de la app de verificacion academica |
 | `ADK_TIMEOUT_SECONDS` | `20` | Timeout para creacion de sesion |
 | `ADK_RUN_TIMEOUT_SECONDS` | `60` | Timeout para ejecucion del agente |
 | `ADK_RUN_RETRIES` | `1` | Reintentos ante timeout de lectura en /run |
