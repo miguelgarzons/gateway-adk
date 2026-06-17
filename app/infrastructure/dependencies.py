@@ -1,7 +1,6 @@
 import os
 
 from app.application.webhook_use_cases import (
-    AgentRouteRule,
     AgentTarget,
     ProcessZohoWebhookUseCase,
 )
@@ -13,6 +12,16 @@ def get_process_zoho_webhook_use_case() -> ProcessZohoWebhookUseCase:
     run_timeout_seconds = float(os.getenv("ADK_RUN_TIMEOUT_SECONDS", "60"))
     run_retries = int(os.getenv("ADK_RUN_RETRIES", "1"))
 
+    categorizador_base_url = os.getenv("ADK_CATEGORIZADOR_BASE_URL", "").strip()
+    if not categorizador_base_url:
+        raise RuntimeError(
+            "ADK_CATEGORIZADOR_BASE_URL is required but not set"
+        )
+
+    categorizador_app_name = os.getenv(
+        "ADK_CATEGORIZADOR_APP_NAME", "categorizador_agent"
+    )
+
     def build_agent_client(target_base_url: str) -> AdkHttpClient:
         return AdkHttpClient(
             base_url=target_base_url,
@@ -21,37 +30,13 @@ def get_process_zoho_webhook_use_case() -> ProcessZohoWebhookUseCase:
             run_retries=run_retries,
         )
 
-    routes: list[AgentRouteRule] = []
-    verificacion_base_url = os.getenv("ADK_VERIFICACION_ACADEMICA_BASE_URL", "").strip()
-    if verificacion_base_url:
-        verificacion_app_name = os.getenv(
-            "ADK_VERIFICACION_ACADEMICA_APP_NAME", "verificacion_academica_agent"
-        )
-        routes.append(
-            AgentRouteRule(
-                solicitud="ACADEMICA",
-                categoria="CERTIFICACIONES Y VERIFICACIONES",
-                sub_categorias="VERIFICACION ACADEMICA",
-                target=AgentTarget(
-                    base_url=verificacion_base_url,
-                    app_name=verificacion_app_name,
-                ),
-            )
-        )
-
-    default_target: AgentTarget | None = None
-    categorizador_base_url = os.getenv("ADK_CATEGORIZADOR_BASE_URL", "").strip()
-    if categorizador_base_url:
-        categorizador_app_name = os.getenv(
-            "ADK_CATEGORIZADOR_APP_NAME", "categorizador_agent"
-        )
-        default_target = AgentTarget(
-            base_url=categorizador_base_url,
-            app_name=categorizador_app_name,
-        )
+    target = AgentTarget(
+        base_url=categorizador_base_url,
+        app_name=categorizador_app_name,
+    )
 
     return ProcessZohoWebhookUseCase(
         agent_client_factory=build_agent_client,
-        routes=routes,
-        default_target=default_target,
+        target=target,
+        
     )
